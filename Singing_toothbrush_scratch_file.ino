@@ -145,42 +145,48 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial, MIDI);
 #define GN10          mtop(127)
 
 volatile const uint16_t period[128] = {  CN0, CS0, DN0, DS0, EN0, FN0, FS0, GN0, GS0, AN0, AS0, BN0,
-                    CN1, CS1, DN1, DS1, EN1, FN1, FS1, GN1, GS1, AN1, AS1, BN1,
-                    CN2, CS2, DN2, DS2, EN2, FN2, FS2, GN2, GS2, AN2, AS2, BN2,
-                    CN3, CS3, DN3, DS3, EN3, FN3, FS3, GN3, GS3, AN3, AS3, BN3, 
-                    CN4, CS4, DN4, DS4, EN4, FN4, FS4, GN4, GS4, AN4, AS4, BN4, 
-                    CN5, CS5, DN5, DS5, EN5, FN5, FS5, GN5, GS5, AN5, AS5, BN5, 
-                    CN6, CS6, DN6, DS6, EN6, FN6, FS6, GN6, GS6, AN6, AS6, BN6, 
-                    CN7, CS7, DN7, DS7, EN7, FN7, FS7, GN7, GS7, AN7, AS7, BN7,
-                    CN8, CS8, DN8, DS8, EN8, FN8, FS8, GN8, GS8, AN8, AS8, BN8,
-                    CN9, CS9, DN9, DS9, EN9, FN9, FS9, GN9, GS9, AN9, AS9, BN9,
-                    CN10, CS10, DN10, DS10, EN10, FN10, FS10, GN10
-                  };
+                                         CN1, CS1, DN1, DS1, EN1, FN1, FS1, GN1, GS1, AN1, AS1, BN1,
+                                         CN2, CS2, DN2, DS2, EN2, FN2, FS2, GN2, GS2, AN2, AS2, BN2,
+                                         CN3, CS3, DN3, DS3, EN3, FN3, FS3, GN3, GS3, AN3, AS3, BN3, 
+                                         CN4, CS4, DN4, DS4, EN4, FN4, FS4, GN4, GS4, AN4, AS4, BN4, 
+                                         CN5, CS5, DN5, DS5, EN5, FN5, FS5, GN5, GS5, AN5, AS5, BN5, 
+                                         CN6, CS6, DN6, DS6, EN6, FN6, FS6, GN6, GS6, AN6, AS6, BN6, 
+                                         CN7, CS7, DN7, DS7, EN7, FN7, FS7, GN7, GS7, AN7, AS7, BN7,
+                                         CN8, CS8, DN8, DS8, EN8, FN8, FS8, GN8, GS8, AN8, AS8, BN8,
+                                         CN9, CS9, DN9, DS9, EN9, FN9, FS9, GN9, GS9, AN9, AS9, BN9,
+                                         CN10, CS10, DN10, DS10, EN10, FN10, FS10, GN10
+                                       };
 
 volatile uint16_t count[4];
 volatile uint16_t per[4];
 
 //pin variables
 int const motorPin1 = 7; //digital motor control pins
-int const aReadPin1 = 14; //analog read pin
-int const aWritePin1 = 6;
+int const ledPin1 = 6; //LED troubleshooting pin
 bool motorToggle = HIGH; 
 
 
 ISR (TIMER2_COMPA_vect) {
   OCR2A +=10;
+  
   if ((count[0]++ > per[0]) && (per[0] > 0)) {
    digitalWrite(motorPin1, motorToggle);
+   //digitalWrite(ledPin1, HIGH);
    motorToggle != motorToggle;
+   count[0] = 0;
   }
   //Serial.println(motorToggle);
+  //digitalWrite(ledPin1, motorToggle);
   
 }
 
 void setup() {
   MIDI.begin(MIDI_CHANNEL_OMNI);
-  Serial.begin(115200);
+  Serial.begin(31250);
   pinMode(motorPin1, OUTPUT);
+  pinMode(ledPin1, OUTPUT);
+
+  digitalWrite(ledPin1, LOW);
   //Serial.println("Serial Open");
 
   TCCR2A = 0;
@@ -193,16 +199,18 @@ void setup() {
 
 void loop() {
   if (MIDI.read()) {
-    //Serial.println("Reading!");
     byte type = MIDI.getType();
     if (type == midi::NoteOn) {
-      //Serial.println("note on");
+      //digitalWrite(ledPin1, HIGH);
       int note = MIDI.getData1();
       int channel = MIDI.getChannel();
       per[channel-1] = period[note];
+      if (channel == 1) {
+        digitalWrite(ledPin1, HIGH);
+      }
     }
     else if (type == midi::NoteOff) {
-      //Serial.println("note off");
+      //digitalWrite(ledPin1, LOW);
       int channel = MIDI.getChannel();
       per[channel-1] = 0;
     }
