@@ -2,8 +2,10 @@
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial, MIDI);
 
+#define ISRCOUNT 34
+
 // Converts the MIDI note number to half the period for the actual note frequency
-#define mtop(mid)        round(50000.0/((440.0/32.0)*pow(2,((mid-9.0)/12.0))))
+#define mtop(mid)        round((32768/ISRCOUNT)/(440.0*pow(2,((mid-69.0)/12.0))))
 
 #define CN0           mtop(0)
 #define CS0           mtop(1)
@@ -161,38 +163,73 @@ volatile uint16_t count[4];
 volatile uint16_t per[4];
 
 //pin variables
+int const motorPin0 = 6;
 int const motorPin1 = 7; //digital motor control pins
+int const motorPin2 = 8;
+int const motorPin3 = 9;
 int const ledPin1 = 6; //LED troubleshooting pin
-bool motorToggle = HIGH; 
+
+bool motorToggle[4] = {HIGH, HIGH, HIGH, HIGH};
+int const motorEnablePin[4] = {2, 3, 4, 5};
+
 
 
 ISR (TIMER2_COMPA_vect) {
-  OCR2A +=10;
-  
+  OCR2A += ISRCOUNT;
   if ((count[0]++ > per[0]) && (per[0] > 0)) {
-   digitalWrite(motorPin1, motorToggle);
-   //digitalWrite(ledPin1, HIGH);
-   motorToggle != motorToggle;
-   count[0] = 0;
+    digitalWrite(motorEnablePin[0], HIGH);
+    motorToggle[0] = !motorToggle[0];
+    digitalWrite(motorPin0, motorToggle[0]);
+    digitalWrite(ledPin1, HIGH);
+    count[0] = 0;
   }
+  
+  if ((count[1]++ > per[1]) && (per[1] > 0)) {
+    digitalWrite(motorEnablePin[1], HIGH);
+    motorToggle[1] = !motorToggle[1];
+    digitalWrite(motorPin1, motorToggle[1]);
+    digitalWrite(ledPin1, HIGH);
+    count[1] = 0;
+  }
+  
+  if ((count[2]++ > per[2]) && (per[2] > 0)) {
+    digitalWrite(motorEnablePin[2], HIGH);    
+    motorToggle[2] = !motorToggle[2];
+    digitalWrite(motorPin2, motorToggle[2]);
+    digitalWrite(ledPin1, HIGH);
+    count[2] = 0;
+  }
+  
+  if ((count[3]++ > per[3]) && (per[3] > 0)) {
+    digitalWrite(motorEnablePin[3], HIGH);   
+    motorToggle[3] = !motorToggle[3];
+    digitalWrite(motorPin3, motorToggle[3]);
+    digitalWrite(ledPin1, HIGH);
+    count[3] = 0;
+  }
+  //motorToggle = !motorToggle;
+  //digitalWrite(motorPin1, motorToggle);
   //Serial.println(motorToggle);
+  //Serial.println(per[0]);
   //digitalWrite(ledPin1, motorToggle);
   
 }
 
 void setup() {
   MIDI.begin(MIDI_CHANNEL_OMNI);
-  Serial.begin(31250);
+  Serial.begin(57600);
   pinMode(motorPin1, OUTPUT);
   pinMode(ledPin1, OUTPUT);
 
-  digitalWrite(ledPin1, LOW);
+  for (int x = 2; x < 6; x++){
+    digitalWrite(motorEnablePin[x], LOW);
+  }
   //Serial.println("Serial Open");
 
   TCCR2A = 0;
-  TCCR2B = (1<<CS20);
-  OCR2A = 10;
-  TIMSK2 = (1<<OCIE2A);
+  TCCR2B = (1 << CS22);
+  OCR2A = ISRCOUNT;
+  TIMSK2 = (1 << OCIE2A);
   sei();
 
 }
@@ -205,16 +242,17 @@ void loop() {
       int note = MIDI.getData1();
       int channel = MIDI.getChannel();
       per[channel-1] = period[note];
-      if (channel == 1) {
-        digitalWrite(ledPin1, HIGH);
-      }
     }
     else if (type == midi::NoteOff) {
-      //digitalWrite(ledPin1, LOW);
+      digitalWrite(ledPin1, LOW);
       int channel = MIDI.getChannel();
       per[channel-1] = 0;
+      digitalWrite(motorEnablePin[channel+1], LOW);
     }
   }
-  
- 
+  /*else {
+    for (int p = 0; p < 4; p++) {
+      per[p] = 0;
+    }   
+  }*/
 }

@@ -6,7 +6,7 @@ import serial
 from mido import MidiFile
 
 port = "/dev/ttyUSB0"
-baudrate = 31250
+baudrate = 57600
 
 try:
 	ser = serial.Serial(port, baudrate, timeout=1)
@@ -17,7 +17,7 @@ except serial.SerialException as e:
 
 #load a midi file
 #mid = MidiFile('mary4.mid')
-#mid = MidiFile('star1.mid')
+#mid = MidiFile('Star_Wars_Main_Theme Stepper.mid')
 mid = MidiFile('Axel_F2.mid')
 if mid is None: 
 	print('Empty Variable')
