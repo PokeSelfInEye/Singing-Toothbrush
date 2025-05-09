@@ -2,10 +2,10 @@
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial, MIDI);
 
-#define ISRCOUNT 34
+#define ISRCOUNT 8
 
 // Converts the MIDI note number to half the period for the actual note frequency
-#define mtop(mid)        round((32768/ISRCOUNT)/(440.0*pow(2,((mid-69.0)/12.0))))
+#define mtop(mid)        round((250000/ISRCOUNT)/(440.0*pow(2,((mid-69.0)/12.0))))
 
 #define CN0           mtop(0)
 #define CS0           mtop(1)
@@ -207,11 +207,6 @@ ISR (TIMER2_COMPA_vect) {
     digitalWrite(ledPin1, HIGH);
     count[3] = 0;
   }
-  //motorToggle = !motorToggle;
-  //digitalWrite(motorPin1, motorToggle);
-  //Serial.println(motorToggle);
-  //Serial.println(per[0]);
-  //digitalWrite(ledPin1, motorToggle);
   
 }
 
@@ -221,7 +216,7 @@ void setup() {
   pinMode(motorPin1, OUTPUT);
   pinMode(ledPin1, OUTPUT);
 
-  for (int x = 2; x < 6; x++){
+  for (int x = 0; x < 4; x++){
     digitalWrite(motorEnablePin[x], LOW);
   }
   //Serial.println("Serial Open");
@@ -247,12 +242,7 @@ void loop() {
       digitalWrite(ledPin1, LOW);
       int channel = MIDI.getChannel();
       per[channel-1] = 0;
-      digitalWrite(motorEnablePin[channel+1], LOW);
+      digitalWrite(motorEnablePin[channel-1], LOW);
     }
   }
-  /*else {
-    for (int p = 0; p < 4; p++) {
-      per[p] = 0;
-    }   
-  }*/
 }
